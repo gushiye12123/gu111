@@ -1,0 +1,1783 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数独大师 - Sudoku Master</title>
+    <style>
+        /* ================================================================
+           数独大师 - 精品卡通简约风格 CSS
+           配色：紫色主调 + 粉/绿/黄辅助，圆角卡片，渐变背景
+           适配：桌面端浏览器 (1280px+ 最佳)
+           ================================================================ */
+        :root {
+            --bg-deep: #0f0c29;
+            --bg-mid: #302b63;
+            --bg-light: #24243e;
+            --card: #ffffff;
+            --card-soft: #f8f9ff;
+            --primary: #6c5ce7;
+            --primary-light: #a29bfe;
+            --primary-dark: #4a3fcf;
+            --pink: #fd79a8;
+            --pink-light: #fab1a0;
+            --green: #00b894;
+            --green-light: #55efc4;
+            --yellow: #fdcb6e;
+            --yellow-light: #ffeaa7;
+            --red: #e17055;
+            --red-light: #fab1a0;
+            --text: #2d3436;
+            --text-light: #636e72;
+            --text-muted: #b2bec3;
+            --cell-bg: #ffffff;
+            --cell-hover: #f0f0ff;
+            --cell-selected: #d5d0ff;
+            --cell-related: #f0f0ff;
+            --cell-same-num: #fff3cd;
+            --cell-error-bg: #ffe0e0;
+            --border: #d0d5e0;
+            --border-thick: #a0a5b0;
+            --shadow-card: 0 8px 32px rgba(0,0,0,0.12);
+            --shadow-btn: 0 4px 14px rgba(0,0,0,0.15);
+            --shadow-popup: 0 20px 60px rgba(0,0,0,0.25);
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --radius-sm: 12px;
+            --radius-xs: 8px;
+            --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+            background: linear-gradient(135deg, var(--bg-deep) 0%, var(--bg-mid) 50%, var(--bg-light) 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* 背景装饰粒子 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0;
+            background:
+                radial-gradient(circle at 15% 25%, rgba(108,92,231,0.18) 0%, transparent 40%),
+                radial-gradient(circle at 85% 20%, rgba(253,121,168,0.12) 0%, transparent 40%),
+                radial-gradient(circle at 50% 75%, rgba(0,184,148,0.10) 0%, transparent 40%),
+                radial-gradient(circle at 75% 60%, rgba(253,203,110,0.08) 0%, transparent 35%);
+        }
+
+        /* ==================== 主菜单 ==================== */
+        .menu-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15,12,41,0.55);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            animation: fadeIn 0.35s ease;
+        }
+        .menu-overlay.hidden { display: none; }
+
+        .menu-card {
+            background: var(--card);
+            border-radius: var(--radius-lg);
+            padding: 44px 40px 36px;
+            box-shadow: var(--shadow-popup);
+            text-align: center;
+            max-width: 440px;
+            width: 92%;
+            animation: popIn 0.45s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .menu-card::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, var(--primary), var(--pink), var(--green), var(--yellow));
+        }
+
+        .menu-logo {
+            font-size: 3.2em;
+            margin-bottom: 4px;
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .menu-title {
+            font-size: 2.1em;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 3px;
+            margin-bottom: 2px;
+        }
+        .menu-subtitle {
+            font-size: 0.82em;
+            color: var(--text-light);
+            margin-bottom: 30px;
+            letter-spacing: 1px;
+        }
+
+        .menu-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 15px 22px;
+            margin: 8px 0;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 1.02em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+            color: white;
+        }
+        .menu-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-btn);
+        }
+        .menu-btn:active { transform: translateY(0) scale(0.98); }
+
+        .menu-btn-solo {
+            background: linear-gradient(135deg, var(--primary), #8b7cf0);
+            box-shadow: 0 4px 16px rgba(108,92,231,0.3);
+        }
+        .menu-btn-solo:hover { box-shadow: 0 8px 24px rgba(108,92,231,0.45); }
+
+        .menu-btn-ai {
+            background: linear-gradient(135deg, var(--red), var(--pink));
+            box-shadow: 0 4px 16px rgba(225,112,85,0.3);
+        }
+        .menu-btn-ai:hover { box-shadow: 0 8px 24px rgba(225,112,85,0.45); }
+
+        .menu-btn-multi {
+            background: linear-gradient(135deg, var(--green), #00cec9);
+            box-shadow: 0 4px 16px rgba(0,184,148,0.3);
+        }
+        .menu-btn-multi:hover { box-shadow: 0 8px 24px rgba(0,184,148,0.45); }
+
+        .menu-btn-settings {
+            background: linear-gradient(135deg, var(--yellow), #f8a5c2);
+            color: var(--text);
+            box-shadow: 0 4px 16px rgba(253,203,110,0.3);
+        }
+        .menu-btn-settings:hover { box-shadow: 0 8px 24px rgba(253,203,110,0.45); }
+
+        .menu-btn-guide {
+            background: transparent;
+            color: var(--text-light);
+            border: 2px solid #e0e0e0;
+        }
+        .menu-btn-guide:hover {
+            background: #f5f6fa;
+            color: var(--primary);
+            border-color: var(--primary-light);
+        }
+
+        /* ==================== 游戏说明弹窗 ==================== */
+        .guide-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15,12,41,0.55);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1200;
+            backdrop-filter: blur(4px);
+            animation: fadeIn 0.3s ease;
+        }
+        .guide-overlay.hidden { display: none; }
+
+        .guide-card {
+            background: var(--card);
+            border-radius: var(--radius-lg);
+            padding: 30px 28px;
+            box-shadow: var(--shadow-popup);
+            max-width: 500px;
+            width: 92%;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: popIn 0.35s ease;
+        }
+        .guide-card h2 {
+            text-align: center;
+            font-size: 1.4em;
+            color: var(--primary);
+            margin-bottom: 18px;
+            font-weight: 900;
+        }
+        .guide-section {
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            background: var(--card-soft);
+            border-radius: var(--radius-xs);
+            border-left: 4px solid var(--primary-light);
+        }
+        .guide-section h3 { font-size: 0.95em; color: var(--text); margin-bottom: 6px; }
+        .guide-section p { font-size: 0.85em; color: var(--text-light); line-height: 1.6; }
+        .guide-close-btn {
+            display: block; width: 100%;
+            padding: 12px; margin-top: 12px;
+            border: none; border-radius: var(--radius-sm);
+            background: var(--primary); color: white;
+            font-size: 1em; font-weight: 700;
+            cursor: pointer; transition: var(--transition);
+        }
+        .guide-close-btn:hover { background: var(--primary-dark); }
+
+        /* ==================== 设置面板 ==================== */
+        .settings-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15,12,41,0.5);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1100;
+            backdrop-filter: blur(4px);
+            animation: fadeIn 0.3s ease;
+        }
+        .settings-overlay.hidden { display: none; }
+
+        .settings-card {
+            background: var(--card);
+            border-radius: var(--radius-lg);
+            padding: 30px 28px;
+            box-shadow: var(--shadow-popup);
+            max-width: 420px;
+            width: 92%;
+            animation: popIn 0.35s ease;
+        }
+        .settings-card::before {
+            content: '';
+            display: block; height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--pink), var(--yellow), var(--green));
+            border-radius: 2px; margin-bottom: 20px;
+        }
+        .settings-title {
+            font-size: 1.35em; font-weight: 900;
+            color: var(--text); margin-bottom: 18px;
+            text-align: center;
+        }
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 13px 0;
+            border-bottom: 1px solid #f0f0f0;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .settings-row:last-of-type { border-bottom: none; }
+        .settings-label {
+            font-weight: 600; color: var(--text);
+            font-size: 0.92em;
+        }
+        .toggle-switch {
+            position: relative; width: 50px; height: 28px;
+            background: #d0d5e0; border-radius: 14px;
+            cursor: pointer; transition: background 0.3s;
+            flex-shrink: 0;
+        }
+        .toggle-switch.on { background: var(--green); }
+        .toggle-switch::after {
+            content: '';
+            position: absolute; top: 3px; left: 3px;
+            width: 22px; height: 22px;
+            background: white; border-radius: 50%;
+            transition: transform 0.3s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+        .toggle-switch.on::after { transform: translateX(22px); }
+
+        .volume-slider {
+            width: 120px; accent-color: var(--primary);
+            cursor: pointer;
+        }
+        .music-select {
+            padding: 7px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: var(--radius-xs);
+            font-size: 0.88em; font-weight: 600;
+            outline: none; cursor: pointer;
+            background: white;
+        }
+        .music-select:focus { border-color: var(--primary); }
+        .settings-close-btn {
+            display: block; width: 100%;
+            padding: 13px; margin-top: 18px;
+            border: none; border-radius: var(--radius-sm);
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white; font-size: 1em; font-weight: 700;
+            cursor: pointer; transition: var(--transition);
+        }
+        .settings-close-btn:hover { box-shadow: 0 4px 16px rgba(108,92,231,0.4); transform: translateY(-1px); }
+
+        /* ==================== 游戏容器 ==================== */
+        .game-wrapper {
+            display: none; width: 100%; max-width: 1060px;
+            position: relative; z-index: 1;
+        }
+        .game-wrapper.visible { display: block; animation: fadeIn 0.35s ease; }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 10px;
+            background: rgba(255,255,255,0.08);
+            border-radius: var(--radius-sm);
+            padding: 12px 18px;
+            backdrop-filter: blur(10px);
+        }
+        .back-btn {
+            padding: 9px 20px;
+            border: 2px solid rgba(255,255,255,0.25);
+            background: rgba(255,255,255,0.08);
+            color: white; border-radius: 25px;
+            font-size: 0.88em; font-weight: 700;
+            cursor: pointer; transition: var(--transition);
+            letter-spacing: 0.5px;
+        }
+        .back-btn:hover {
+            background: rgba(255,255,255,0.18);
+            border-color: rgba(255,255,255,0.5);
+            transform: translateY(-1px);
+        }
+        .header-info {
+            display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+        }
+        .game-mode-label {
+            color: white; font-size: 1.1em; font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+        .level-display {
+            color: var(--yellow); font-size: 1.05em; font-weight: 900;
+        }
+        .best-record {
+            color: var(--green-light); font-size: 0.85em; font-weight: 700;
+        }
+        .countdown {
+            color: white; font-size: 1.25em; font-weight: 900;
+            font-variant-numeric: tabular-nums;
+            background: rgba(255,255,255,0.12);
+            padding: 4px 14px; border-radius: 20px;
+        }
+        .countdown.urgent {
+            color: var(--red);
+            background: rgba(225,112,85,0.2);
+            animation: pulse 0.5s infinite;
+        }
+
+        /* ==================== 双人/双面板布局 ==================== */
+        .dual-boards {
+            display: flex; gap: 22px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .player-panel {
+            background: var(--card);
+            border-radius: var(--radius-md);
+            padding: 22px 20px;
+            box-shadow: var(--shadow-card);
+            text-align: center;
+            flex: 1; min-width: 340px; max-width: 480px;
+            transition: var(--transition);
+            position: relative;
+        }
+        .player-panel.active-player {
+            box-shadow: 0 0 0 4px var(--primary), 0 14px 44px rgba(108,92,231,0.25);
+        }
+        .player-panel.opponent-turn {
+            opacity: 0.6; pointer-events: none;
+            filter: grayscale(0.15);
+        }
+        .player-name {
+            font-size: 1.1em; font-weight: 800;
+            color: var(--text); margin-bottom: 4px;
+        }
+        .player-color-dot {
+            display: inline-block; width: 10px; height: 10px;
+            border-radius: 50%; margin-right: 4px;
+        }
+        .player-score {
+            font-size: 0.88em; color: var(--text-light);
+            margin-bottom: 12px;
+        }
+        .player-badge {
+            display: inline-block; padding: 4px 14px;
+            border-radius: 20px; font-size: 0.78em;
+            font-weight: 700; margin-bottom: 10px;
+        }
+        .badge-you { background: #e8e5ff; color: var(--primary); }
+        .badge-ai { background: #ffe8e0; color: var(--red); }
+        .badge-p2 { background: #e0fff5; color: var(--green); }
+
+        /* ==================== 数独棋盘 ==================== */
+        .board {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 1px;
+            background: var(--border-thick);
+            border: 3px solid var(--border-thick);
+            border-radius: var(--radius-xs);
+            overflow: hidden;
+            margin: 0 auto;
+            max-width: 420px;
+            aspect-ratio: 1;
+            width: 100%;
+        }
+        .cell {
+            aspect-ratio: 1;
+            display: flex; align-items: center; justify-content: center;
+            font-size: clamp(15px, 3.5vw, 23px);
+            font-weight: 700;
+            cursor: pointer;
+            background: var(--cell-bg);
+            transition: background 0.12s, box-shadow 0.12s, transform 0.1s;
+            user-select: none;
+            position: relative;
+        }
+        .cell:hover {
+            background: var(--cell-hover);
+            transform: scale(1.03);
+            z-index: 1;
+        }
+        .cell.selected {
+            background: var(--cell-selected) !important;
+            box-shadow: inset 0 0 0 3px var(--primary);
+            z-index: 2;
+        }
+        .cell.related { background: var(--cell-related); }
+        .cell.same-num { background: var(--cell-same-num); }
+        .cell.given { color: #2d3436; font-weight: 900; }
+        .cell.user-input { color: var(--primary); }
+        .cell.user-input-p1 { color: var(--primary); }
+        .cell.user-input-p2 { color: #0984e3; }
+        .cell.error {
+            color: #d63031 !important;
+            background: var(--cell-error-bg) !important;
+            animation: shake 0.4s ease;
+        }
+        .cell.hint { color: var(--green); font-weight: 900; }
+
+        /* 对手/双人模式标记 */
+        .cell.p2-color { color: #0984e3; }
+        .cell.p2-color::after {
+            content: '';
+            position: absolute; bottom: 3px; left: 50%;
+            transform: translateX(-50%);
+            width: 6px; height: 6px;
+            background: #0984e3; border-radius: 50%;
+        }
+        .cell.ai-color { color: var(--red); }
+        .cell.ai-color::after {
+            content: '';
+            position: absolute; bottom: 3px; left: 50%;
+            transform: translateX(-50%);
+            width: 6px; height: 6px;
+            background: var(--red); border-radius: 50%;
+        }
+
+        /* 3x3 宫格粗边框 */
+        .cell:nth-child(3n):not(:nth-child(9n)) { border-right: 2.5px solid var(--border-thick); }
+        .cell:nth-child(n+19):nth-child(-n+27),
+        .cell:nth-child(n+46):nth-child(-n+54) { border-bottom: 2.5px solid var(--border-thick); }
+
+        /* ==================== 数字盘 & 按钮 ==================== */
+        .number-pad {
+            display: flex; justify-content: center; gap: 7px;
+            margin-top: 14px; flex-wrap: wrap;
+        }
+        .num-btn {
+            width: 40px; height: 40px;
+            border: 2px solid var(--primary);
+            background: white; color: var(--primary);
+            border-radius: 50%;
+            font-size: 19px; font-weight: 700;
+            cursor: pointer; transition: var(--transition);
+        }
+        .num-btn:hover {
+            background: var(--primary); color: white;
+            transform: scale(1.14);
+            box-shadow: 0 4px 12px rgba(108,92,231,0.35);
+        }
+        .num-btn:active { transform: scale(0.93); }
+
+        .action-buttons {
+            display: flex; justify-content: center; gap: 9px;
+            margin-top: 14px; flex-wrap: wrap;
+        }
+        .action-btn {
+            padding: 9px 20px;
+            border: none; border-radius: 25px;
+            font-size: 0.84em; font-weight: 700;
+            cursor: pointer; transition: var(--transition);
+            letter-spacing: 0.5px;
+        }
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-btn);
+        }
+        .action-btn:active { transform: translateY(0); }
+
+        .btn-undo { background: #e8e8f0; color: var(--text); }
+        .btn-undo:hover { background: #d8d8e5; }
+        .btn-hint { background: var(--yellow); color: var(--text); }
+        .btn-hint:hover { background: #f8c850; }
+        .btn-erase { background: var(--red); color: white; }
+        .btn-erase:hover { background: #d45d45; }
+        .btn-check { background: var(--green); color: white; }
+        .btn-check:hover { background: #00a381; }
+        .btn-reset { background: #636e72; color: white; }
+        .btn-reset:hover { background: #555f63; }
+
+        .message {
+            text-align: center; min-height: 24px;
+            font-size: 0.88em; font-weight: 700;
+            margin-top: 10px; transition: all 0.3s;
+        }
+        .message.success { color: var(--green); }
+        .message.error-msg { color: var(--red); }
+        .message.info { color: var(--primary); }
+
+        /* ==================== 限时模式选项 ==================== */
+        .control-row {
+            display: flex; justify-content: center; gap: 10px;
+            margin-bottom: 12px; flex-wrap: wrap;
+        }
+        .option-btn {
+            padding: 7px 18px;
+            border: 2px solid var(--primary-light);
+            background: transparent; color: white;
+            border-radius: 20px;
+            font-size: 0.82em; font-weight: 700;
+            cursor: pointer; transition: var(--transition);
+            white-space: nowrap;
+        }
+        .option-btn.active {
+            background: var(--primary); color: white;
+            border-color: var(--primary);
+        }
+        .option-btn:hover { background: rgba(255,255,255,0.1); }
+        .option-btn.active:hover { background: var(--primary-dark); }
+
+        /* ==================== 难度选择 ==================== */
+        .diff-row {
+            display: flex; justify-content: center; gap: 10px;
+            margin-bottom: 12px; flex-wrap: wrap;
+        }
+        .diff-btn-game {
+            padding: 7px 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            background: transparent; color: white;
+            border-radius: 20px;
+            font-size: 0.85em; font-weight: 700;
+            cursor: pointer; transition: var(--transition);
+        }
+        .diff-btn-game.active {
+            background: white; color: var(--primary);
+            border-color: white;
+        }
+        .diff-btn-game:hover { background: rgba(255,255,255,0.1); }
+        .diff-btn-game.active:hover { background: rgba(255,255,255,0.9); }
+
+        /* ==================== 结果弹窗 ==================== */
+        .result-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15,12,41,0.55);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1200;
+            backdrop-filter: blur(4px);
+            animation: fadeIn 0.3s ease;
+        }
+        .result-overlay.hidden { display: none; }
+
+        .result-card {
+            background: var(--card);
+            border-radius: var(--radius-lg);
+            padding: 38px 32px;
+            text-align: center;
+            box-shadow: var(--shadow-popup);
+            max-width: 380px;
+            width: 92%;
+            animation: popIn 0.45s ease;
+        }
+        .result-icon { font-size: 3.5em; margin-bottom: 10px; }
+        .result-title { font-size: 1.5em; font-weight: 900; color: var(--text); margin-bottom: 8px; }
+        .result-detail { font-size: 0.92em; color: var(--text-light); margin-bottom: 6px; }
+        .result-record { font-size: 0.85em; color: var(--green); font-weight: 700; margin-bottom: 16px; }
+        .result-btn {
+            padding: 12px 30px; border: none;
+            border-radius: 25px;
+            font-size: 0.98em; font-weight: 700;
+            cursor: pointer; transition: var(--transition);
+            margin: 5px;
+        }
+        .result-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-btn); }
+        .result-btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; }
+        .result-btn-secondary { background: #e8e8f0; color: var(--text); }
+
+        /* ==================== 自定义时间输入 ==================== */
+        .custom-time-input {
+            width: 60px; padding: 6px 8px;
+            border: 2px solid var(--primary-light);
+            border-radius: var(--radius-xs);
+            text-align: center; font-size: 0.88em;
+            font-weight: 700; outline: none;
+            background: rgba(255,255,255,0.15);
+            color: white;
+        }
+        .custom-time-input:focus { border-color: var(--yellow); }
+
+        /* ==================== 动画 ==================== */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.82); }
+            60% { transform: scale(1.03); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-3px); }
+            75% { transform: translateX(3px); }
+        }
+
+        /* ==================== 响应式 ==================== */
+        @media (max-width: 780px) {
+            .dual-boards { flex-direction: column; align-items: center; }
+            .player-panel { max-width: 100%; min-width: unset; width: 100%; }
+            .board { max-width: 360px; }
+            .menu-card { padding: 30px 20px; }
+            .menu-btn { padding: 13px 16px; font-size: 0.94em; }
+        }
+        @media (max-width: 420px) {
+            .board { max-width: 300px; }
+            .cell { font-size: 13px; }
+            .num-btn { width: 34px; height: 34px; font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==================== 主菜单 ==================== -->
+    <div class="menu-overlay" id="menuOverlay">
+        <div class="menu-card">
+            <div class="menu-logo">🧩</div>
+            <div class="menu-title">数独大师</div>
+            <div class="menu-subtitle">Sudoku Master · 精品卡通数独</div>
+            <button class="menu-btn menu-btn-solo" onclick="startSoloMode()">🎯 单人闯关模式</button>
+            <button class="menu-btn menu-btn-ai" onclick="startAIMode()">🤖 AI人机对战模式</button>
+            <button class="menu-btn menu-btn-multi" onclick="startMultiMode()">👥 本地多人模式</button>
+            <button class="menu-btn menu-btn-settings" onclick="openSettings()">🎵 音乐设置</button>
+            <button class="menu-btn menu-btn-guide" onclick="openGuide()">📖 游戏说明</button>
+        </div>
+    </div>
+
+    <!-- ==================== 游戏说明弹窗 ==================== -->
+    <div class="guide-overlay hidden" id="guideOverlay">
+        <div class="guide-card">
+            <h2>📖 游戏说明</h2>
+            <div class="guide-section">
+                <h3>🎯 游戏规则</h3>
+                <p>在9×9的棋盘上填入数字1~9，使每一行、每一列、每个3×3小宫格内数字不重复。</p>
+            </div>
+            <div class="guide-section">
+                <h3>🖱 操作方式</h3>
+                <p>点击棋盘格子选中 → 点数字盘或按键盘1~9填入；Backspace擦除；方向键移动选区。</p>
+            </div>
+            <div class="guide-section">
+                <h3>🤖 AI对战</h3>
+                <p>你与AI轮流填数，双方填入错误会标红。AI根据难度有不同正确率，先完成者获胜。</p>
+            </div>
+            <div class="guide-section">
+                <h3>👥 本地多人</h3>
+                <p>双人轮流操作，玩家1填蓝色数字，玩家2填蓝色带点数字，回合交替进行。</p>
+            </div>
+            <div class="guide-section">
+                <h3>🏆 记录与关卡</h3>
+                <p>通关累计关卡数，最快通关时间自动保存，可在游戏界面顶部查看。</p>
+            </div>
+            <button class="guide-close-btn" onclick="closeGuide()">✅ 我知道了</button>
+        </div>
+    </div>
+
+    <!-- ==================== 设置面板 ==================== -->
+    <div class="settings-overlay hidden" id="settingsOverlay">
+        <div class="settings-card">
+            <div class="settings-title">🎵 音乐设置</div>
+            <div class="settings-row">
+                <span class="settings-label">🎼 背景音乐</span>
+                <div class="toggle-switch on" id="musicToggle" onclick="toggleMusic()"></div>
+            </div>
+            <div class="settings-row">
+                <span class="settings-label">🔊 音量</span>
+                <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="30" oninput="changeVolume(this.value)">
+            </div>
+            <div class="settings-row">
+                <span class="settings-label">🎶 切换BGM</span>
+                <select class="music-select" id="musicSelect" onchange="switchBGM(this.value)">
+                    <option value="0">🌙 月光小夜曲</option>
+                    <option value="1">🌸 樱花飘落</option>
+                    <option value="2">🎹 星空漫步</option>
+                    <option value="3">🍃 清晨微风</option>
+                </select>
+            </div>
+            <div class="settings-row">
+                <span class="settings-label">🔔 按键音效</span>
+                <div class="toggle-switch on" id="sfxToggle" onclick="toggleSFX()"></div>
+            </div>
+            <button class="settings-close-btn" onclick="closeSettings()">✅ 完成</button>
+        </div>
+    </div>
+
+    <!-- ==================== 游戏界面 ==================== -->
+    <div class="game-wrapper" id="gameWrapper">
+        <div class="game-header">
+            <button class="back-btn" onclick="backToMenu()">← 返回菜单</button>
+            <div class="header-info">
+                <span class="game-mode-label" id="gameModeLabel">🎯 单人闯关</span>
+                <span class="level-display" id="levelDisplay"></span>
+                <span class="best-record" id="bestRecordDisplay"></span>
+            </div>
+            <span class="countdown" id="countdownDisplay"></span>
+        </div>
+
+        <!-- 控制区 -->
+        <div id="soloControls">
+            <div class="control-row" id="timeOptionRow">
+                <button class="option-btn active" data-time="unlimited" onclick="setTimeMode('unlimited')">🕐 不限时</button>
+                <button class="option-btn" data-time="20min" onclick="setTimeMode('20min')">⏱ 20分钟</button>
+                <button class="option-btn" data-time="30min" onclick="setTimeMode('30min')">⏱ 30分钟</button>
+                <button class="option-btn" data-time="custom" onclick="setTimeMode('custom')">⏱ 自定义</button>
+            </div>
+            <div class="control-row" id="customTimeRow" style="display:none;">
+                <input type="number" class="custom-time-input" id="customMinutes" min="1" max="120" value="15" onchange="updateCustomTime()">
+                <span style="font-weight:700;color:white;">分钟</span>
+            </div>
+            <div class="diff-row" id="diffRow">
+                <button class="diff-btn-game active" data-diff="easy" onclick="setDifficulty('easy')">⭐ 简易 (32空)</button>
+                <button class="diff-btn-game" data-diff="medium" onclick="setDifficulty('medium')">⭐⭐ 普通 (45空)</button>
+                <button class="diff-btn-game" data-diff="hard" onclick="setDifficulty('hard')">⭐⭐⭐ 困难 (55空)</button>
+            </div>
+        </div>
+
+        <div class="dual-boards" id="dualBoards">
+            <!-- 玩家1面板 -->
+            <div class="player-panel active-player" id="panel1">
+                <div class="player-name">
+                    <span class="player-color-dot" style="background:var(--primary);"></span>玩家
+                </div>
+                <div class="player-score" id="score1"></div>
+                <div class="board" id="board1"></div>
+                <div class="number-pad" id="numberPad1"></div>
+                <div class="action-buttons">
+                    <button class="action-btn btn-undo" onclick="undoMove()">↩ 撤回</button>
+                    <button class="action-btn btn-hint" onclick="giveHint()">💡 提示</button>
+                    <button class="action-btn btn-erase" onclick="eraseCell()">🗑 擦除</button>
+                    <button class="action-btn btn-check" onclick="checkSolution()">✅ 检查</button>
+                    <button class="action-btn btn-reset" onclick="resetGame()">🔄 重置</button>
+                </div>
+                <div class="message" id="message1"></div>
+            </div>
+
+            <!-- 玩家2面板 (AI/多人模式) -->
+            <div class="player-panel" id="panel2" style="display:none;">
+                <div class="player-name" id="p2Name">
+                    <span class="player-color-dot" style="background:var(--red);"></span>AI
+                </div>
+                <div class="player-score" id="score2"></div>
+                <div class="board" id="board2"></div>
+                <div class="number-pad" id="numberPad2" style="display:none;"></div>
+                <div class="message" id="message2"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 结果弹窗 ==================== -->
+    <div class="result-overlay hidden" id="resultOverlay">
+        <div class="result-card">
+            <div class="result-icon" id="resultIcon">🎉</div>
+            <div class="result-title" id="resultTitle"></div>
+            <div class="result-detail" id="resultDetail"></div>
+            <div class="result-detail" id="resultLevel"></div>
+            <div class="result-record" id="resultRecord"></div>
+            <button class="result-btn result-btn-primary" onclick="nextLevel()">▶ 下一关</button>
+            <button class="result-btn result-btn-secondary" onclick="backToMenu()">🏠 返回菜单</button>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            "use strict";
+            const SIZE = 9;
+
+            // ==================== 全局状态 ====================
+            let gameMode = 'solo';   // 'solo' | 'ai' | 'multi'
+            let difficulty = 'easy'; // 'easy' | 'medium' | 'hard'
+            let timeMode = 'unlimited';
+            let timeLimitSeconds = 0;
+            let customTimeMinutes = 15;
+            let countdownInterval = null;
+            let countdownRemaining = 0;
+            let elapsedSeconds = 0;     // 计时（不限时模式用）
+            let elapsedInterval = null;
+            let gameOver = false;
+            let currentPlayerTurn = 1;  // 多人模式回合
+
+            // 关卡系统
+            let currentLevel = 1;
+            let totalLevelsCleared = 0;
+
+            // 最快通关记录（按难度存储秒数）
+            let bestRecords = { easy: null, medium: null, hard: null };
+
+            // 历史记录（撤回用）
+            let history = [];
+
+            // 玩家状态
+            let p1 = null, p2 = null;
+
+            // ==================== 音频引擎 ====================
+            let audioCtx = null;
+            let musicGainNode = null;
+            let sfxGainNode = null;
+            let musicPlaying = false;
+            let sfxEnabled = true;
+            let musicOscillators = [];
+            let musicTimeoutIds = [];
+            let currentBGM = 0;
+            let bgmVolume = 0.30;
+
+            // 4首内置BGM（Web Audio合成，无需外部文件）
+            const bgmTracks = [
+                {
+                    name: '月光小夜曲',
+                    notes: [
+                        { f: 261.63, d: 0.6 },{ f: 293.66, d: 0.4 },{ f: 329.63, d: 0.6 },{ f: 392.00, d: 0.8 },
+                        { f: 329.63, d: 0.4 },{ f: 293.66, d: 0.5 },{ f: 261.63, d: 0.7 },{ f: 220.00, d: 0.5 },
+                        { f: 246.94, d: 0.5 },{ f: 261.63, d: 0.8 },{ f: 329.63, d: 0.6 },{ f: 349.23, d: 0.5 },
+                        { f: 392.00, d: 0.7 },{ f: 349.23, d: 0.4 },{ f: 329.63, d: 0.6 },{ f: 293.66, d: 0.5 },
+                        { f: 261.63, d: 0.8 },{ f: 293.66, d: 0.5 },{ f: 261.63, d: 0.6 },{ f: 220.00, d: 1.0 },
+                    ],
+                },
+                {
+                    name: '樱花飘落',
+                    notes: [
+                        { f: 330.00, d: 0.7 },{ f: 294.00, d: 0.5 },{ f: 262.00, d: 0.8 },{ f: 330.00, d: 0.6 },
+                        { f: 392.00, d: 0.7 },{ f: 440.00, d: 0.5 },{ f: 392.00, d: 0.6 },{ f: 330.00, d: 0.8 },
+                        { f: 294.00, d: 0.5 },{ f: 262.00, d: 0.7 },{ f: 330.00, d: 0.6 },{ f: 262.00, d: 0.5 },
+                        { f: 294.00, d: 0.6 },{ f: 330.00, d: 0.8 },{ f: 392.00, d: 0.5 },{ f: 330.00, d: 0.7 },
+                        { f: 294.00, d: 0.5 },{ f: 262.00, d: 1.0 },
+                    ],
+                },
+                {
+                    name: '星空漫步',
+                    notes: [
+                        { f: 196.00, d: 0.5 },{ f: 220.00, d: 0.4 },{ f: 246.94, d: 0.5 },{ f: 261.63, d: 0.7 },
+                        { f: 293.66, d: 0.5 },{ f: 329.63, d: 0.6 },{ f: 349.23, d: 0.5 },{ f: 392.00, d: 0.8 },
+                        { f: 440.00, d: 0.6 },{ f: 392.00, d: 0.5 },{ f: 349.23, d: 0.5 },{ f: 329.63, d: 0.7 },
+                        { f: 293.66, d: 0.5 },{ f: 261.63, d: 0.6 },{ f: 246.94, d: 0.5 },{ f: 220.00, d: 0.8 },
+                        { f: 196.00, d: 1.0 },
+                    ],
+                },
+                {
+                    name: '清晨微风',
+                    notes: [
+                        { f: 523.25, d: 0.3 },{ f: 587.33, d: 0.3 },{ f: 523.25, d: 0.4 },{ f: 440.00, d: 0.5 },
+                        { f: 392.00, d: 0.4 },{ f: 440.00, d: 0.3 },{ f: 523.25, d: 0.5 },{ f: 587.33, d: 0.3 },
+                        { f: 523.25, d: 0.4 },{ f: 440.00, d: 0.5 },{ f: 392.00, d: 0.6 },{ f: 349.23, d: 0.4 },
+                        { f: 392.00, d: 0.5 },{ f: 440.00, d: 0.4 },{ f: 523.25, d: 0.6 },{ f: 440.00, d: 0.5 },
+                        { f: 392.00, d: 0.5 },{ f: 349.23, d: 0.4 },{ f: 392.00, d: 0.6 },{ f: 330.00, d: 0.8 },
+                    ],
+                },
+            ];
+
+            function initAudio() {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    musicGainNode = audioCtx.createGain();
+                    musicGainNode.gain.value = bgmVolume;
+                    musicGainNode.connect(audioCtx.destination);
+                    sfxGainNode = audioCtx.createGain();
+                    sfxGainNode.gain.value = 0.35;
+                    sfxGainNode.connect(audioCtx.destination);
+                }
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+            }
+
+            // ---------- 音效（短促提示音） ----------
+            function playSFX(freq, type, duration, vol) {
+                if (!sfxEnabled || !audioCtx) return;
+                try {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = type || 'sine';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(vol || 0.2, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(sfxGainNode);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + duration);
+                } catch (e) { /* ignore */ }
+            }
+
+            // 点击格子音效
+            function playClickSound() { playSFX(660, 'sine', 0.08, 0.12); }
+            // 填入正确音效
+            function playCorrectSound() { playSFX(880, 'sine', 0.12, 0.18); playSFX(1100, 'sine', 0.08, 0.12); }
+            // 填入错误音效
+            function playErrorSound() { playSFX(180, 'square', 0.18, 0.15); }
+            // 通关音效
+            function playWinSound() {
+                [523, 659, 784, 1047].forEach((f, i) => {
+                    setTimeout(() => playSFX(f, 'sine', 0.25, 0.22), i * 120);
+                });
+            }
+
+            // ---------- 背景音乐 ----------
+            function stopAllMusic() {
+                musicPlaying = false;
+                musicOscillators.forEach(o => { try { o.stop(); } catch (e) { } });
+                musicOscillators = [];
+                musicTimeoutIds.forEach(t => clearTimeout(t));
+                musicTimeoutIds = [];
+            }
+
+            function playNote(freq, startTime, duration) {
+                if (!audioCtx) return;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0, startTime);
+                gain.gain.linearRampToValueAtTime(0.38, startTime + 0.04);
+                gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+                osc.connect(gain);
+                gain.connect(musicGainNode);
+                osc.start(startTime);
+                osc.stop(startTime + duration);
+                musicOscillators.push(osc);
+            }
+
+            function playBGMLoop() {
+                if (!musicPlaying || !audioCtx) return;
+                stopAllMusic();
+                musicPlaying = true;
+                const track = bgmTracks[currentBGM];
+                let t = audioCtx.currentTime + 0.1;
+                for (let i = 0; i < track.notes.length; i++) {
+                    const { f, d } = track.notes[i];
+                    playNote(f, t, d);
+                    t += d + 0.06;
+                }
+                const totalDur = track.notes.reduce((s, n) => s + n.d + 0.06, 0);
+                const tid = setTimeout(() => playBGMLoop(), (totalDur - 0.1) * 1000);
+                musicTimeoutIds.push(tid);
+            }
+
+            function startMusic() {
+                initAudio();
+                stopAllMusic();
+                musicPlaying = true;
+                playBGMLoop();
+                document.getElementById('musicToggle').classList.add('on');
+            }
+
+            function stopMusic() {
+                stopAllMusic();
+                document.getElementById('musicToggle').classList.remove('on');
+            }
+
+            window.toggleMusic = function () {
+                initAudio();
+                if (musicPlaying) { stopMusic(); } else { startMusic(); }
+            };
+
+            window.toggleSFX = function () {
+                sfxEnabled = !sfxEnabled;
+                document.getElementById('sfxToggle').classList.toggle('on', sfxEnabled);
+            };
+
+            window.changeVolume = function (val) {
+                bgmVolume = val / 100;
+                if (musicGainNode) musicGainNode.gain.value = bgmVolume;
+            };
+
+            window.switchBGM = function (val) {
+                currentBGM = parseInt(val);
+                if (musicPlaying) {
+                    stopAllMusic();
+                    musicPlaying = true;
+                    playBGMLoop();
+                }
+            };
+
+            window.openSettings = function () {
+                document.getElementById('settingsOverlay').classList.remove('hidden');
+            };
+            window.closeSettings = function () {
+                document.getElementById('settingsOverlay').classList.add('hidden');
+            };
+
+            // 游戏说明
+            window.openGuide = function () {
+                document.getElementById('guideOverlay').classList.remove('hidden');
+            };
+            window.closeGuide = function () {
+                document.getElementById('guideOverlay').classList.add('hidden');
+            };
+
+            // 首次交互自动开始音乐
+            let musicAutoStarted = false;
+            document.addEventListener('click', function autoMusic() {
+                if (!musicAutoStarted) {
+                    musicAutoStarted = true;
+                    startMusic();
+                    document.removeEventListener('click', autoMusic);
+                }
+            }, { once: true });
+
+            // ==================== 数独工具 ====================
+            function shuffle(arr) { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+            function deepCopy(arr) { return arr.map(r => [...r]); }
+
+            function isValid(boardArr, row, col, num) {
+                for (let i = 0; i < SIZE; i++) { if (boardArr[row][i] === num || boardArr[i][col] === num) return false; }
+                const br = Math.floor(row / 3) * 3, bc = Math.floor(col / 3) * 3;
+                for (let r = br; r < br + 3; r++) for (let c = bc; c < bc + 3; c++) if (boardArr[r][c] === num) return false;
+                return true;
+            }
+
+            function solve(boardArr) {
+                for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) {
+                    if (boardArr[r][c] === 0) {
+                        const nums = shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+                        for (const num of nums) { if (isValid(boardArr, r, c, num)) { boardArr[r][c] = num; if (solve(boardArr)) return true; boardArr[r][c] = 0; } }
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            function generateFullBoard() {
+                const b = Array.from({ length: SIZE }, () => Array(SIZE).fill(0));
+                b[0] = shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+                solve(b);
+                return b;
+            }
+
+            function getEmptyCount(diff) {
+                switch (diff) { case 'easy': return 32; case 'medium': return 45; case 'hard': return 55; default: return 32; }
+            }
+
+            function createPuzzle(fullBoard, diff) {
+                const puzzle = deepCopy(fullBoard);
+                const mask = Array.from({ length: SIZE }, () => Array(SIZE).fill(false));
+                const positions = [];
+                for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) positions.push([r, c]);
+                for (let i = positions.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [positions[i], positions[j]] = [positions[j], positions[i]]; }
+                let removed = 0;
+                for (const [r, c] of positions) { if (removed >= getEmptyCount(diff)) break; puzzle[r][c] = 0; removed++; }
+                for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) mask[r][c] = puzzle[r][c] !== 0;
+                return { puzzle, mask };
+            }
+
+            // ==================== 玩家类 ====================
+            class PlayerState {
+                constructor() {
+                    this.board = [];
+                    this.solution = [];
+                    this.givenMask = [];
+                    this.hintMask = [];
+                    this.opponentMask = [];
+                    this.selectedRow = -1;
+                    this.selectedCol = -1;
+                    this.filledCount = 0;
+                    this.completed = false;
+                    this.wrongCells = new Set(); // 错误格子集合
+                }
+
+                load(fullBoard, diff) {
+                    this.solution = fullBoard;
+                    const { puzzle, mask } = createPuzzle(fullBoard, diff);
+                    this.board = puzzle;
+                    this.givenMask = mask;
+                    this.hintMask = Array.from({ length: SIZE }, () => Array(SIZE).fill(false));
+                    this.opponentMask = Array.from({ length: SIZE }, () => Array(SIZE).fill(false));
+                    this.selectedRow = -1;
+                    this.selectedCol = -1;
+                    this.filledCount = 0;
+                    this.completed = false;
+                    this.wrongCells = new Set();
+                }
+
+                checkComplete() {
+                    for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) if (this.board[r][c] !== this.solution[r][c]) return false;
+                    return true;
+                }
+
+                getFilledCount() {
+                    let c = 0;
+                    for (let r = 0; r < SIZE; r++) for (let cc = 0; cc < SIZE; cc++) if (!this.givenMask[r][cc] && this.board[r][cc] !== 0) c++;
+                    return c;
+                }
+            }
+
+            function renderBoard(player, boardElId, isActive, isOpponent) {
+                const el = document.getElementById(boardElId);
+                el.innerHTML = '';
+                for (let r = 0; r < SIZE; r++) {
+                    for (let c = 0; c < SIZE; c++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'cell';
+                        cell.dataset.row = r;
+                        cell.dataset.col = c;
+
+                        if (player.board[r][c] !== 0) {
+                            cell.textContent = player.board[r][c];
+                            if (player.givenMask[r][c]) {
+                                cell.classList.add('given');
+                            } else if (player.hintMask[r][c]) {
+                                cell.classList.add('hint');
+                            } else if (player.opponentMask[r][c]) {
+                                cell.classList.add(gameMode === 'ai' ? 'ai-color' : 'p2-color');
+                            } else {
+                                // 区分玩家1和玩家2的填入颜色
+                                if (boardElId === 'board1' || gameMode === 'solo') {
+                                    cell.classList.add('user-input-p1');
+                                } else {
+                                    cell.classList.add('user-input-p2');
+                                }
+                            }
+                        }
+
+                        // 高亮系统
+                        if (isActive && r === player.selectedRow && c === player.selectedCol) {
+                            cell.classList.add('selected');
+                        } else if (isActive && player.selectedRow >= 0 && player.selectedCol >= 0) {
+                            if (r === player.selectedRow || c === player.selectedCol ||
+                                (Math.floor(r / 3) === Math.floor(player.selectedRow / 3) && Math.floor(c / 3) === Math.floor(player.selectedCol / 3))) {
+                                cell.classList.add('related');
+                            }
+                            if (player.board[r][c] !== 0 && player.board[r][c] === player.board[player.selectedRow][player.selectedCol] && player.board[player.selectedRow][player.selectedCol] !== 0) {
+                                cell.classList.add('same-num');
+                            }
+                        }
+
+                        // 错误标记
+                        if (!player.givenMask[r][c] && !player.hintMask[r][c] && !player.opponentMask[r][c] &&
+                            player.board[r][c] !== 0 && player.board[r][c] !== player.solution[r][c]) {
+                            cell.classList.add('error');
+                        }
+
+                        if (isActive && !isOpponent) {
+                            cell.addEventListener('click', () => selectCell(player, r, c, boardElId));
+                        }
+                        el.appendChild(cell);
+                    }
+                }
+            }
+
+            function renderNumberPad(player, padElId) {
+                const el = document.getElementById(padElId);
+                if (!el) return;
+                el.innerHTML = '';
+                for (let n = 1; n <= 9; n++) {
+                    const btn = document.createElement('button');
+                    btn.className = 'num-btn';
+                    btn.textContent = n;
+                    btn.addEventListener('click', () => placeNumber(player, n));
+                    el.appendChild(btn);
+                }
+            }
+
+            function selectCell(player, r, c, boardElId) {
+                if (gameOver) return;
+                if (gameMode === 'multi' && currentPlayerTurn !== (player === p1 ? 1 : 2)) return;
+                player.selectedRow = r;
+                player.selectedCol = c;
+                playClickSound();
+                refreshAllUI();
+            }
+
+            function placeNumber(player, num) {
+                if (gameOver) return;
+                if (player.selectedRow < 0 || player.selectedCol < 0) return;
+                const r = player.selectedRow, c = player.selectedCol;
+                if (player.givenMask[r][c] || player.hintMask[r][c]) return;
+
+                // 非法数字校验：填入的数字必须在行/列/宫内不重复
+                const currentBoard = deepCopy(player.board);
+                currentBoard[r][c] = 0;
+                if (!isValid(currentBoard, r, c, num)) {
+                    document.getElementById('message1').textContent = '⚠ 该数字与同行/列/宫冲突，不能填入';
+                    document.getElementById('message1').className = 'message error-msg';
+                    playErrorSound();
+                    return;
+                }
+
+                // 保存历史（用于撤回）
+                history.push({
+                    player: player,
+                    row: r, col: c,
+                    oldVal: player.board[r][c],
+                    wasHint: player.hintMask[r][c],
+                    wasOpponent: player.opponentMask[r][c],
+                });
+
+                player.board[r][c] = num;
+                player.hintMask[r][c] = false;
+                player.opponentMask[r][c] = false;
+                player.filledCount = player.getFilledCount();
+
+                // 判断正确/错误
+                if (num === player.solution[r][c]) {
+                    playCorrectSound();
+                    document.getElementById('message1').textContent = '';
+                    document.getElementById('message1').className = 'message';
+                } else {
+                    playErrorSound();
+                    document.getElementById('message1').textContent = '❌ 填入数字错误';
+                    document.getElementById('message1').className = 'message error-msg';
+                }
+
+                refreshAllUI();
+
+                // 检查完成
+                if (player.checkComplete()) {
+                    player.completed = true;
+                    onPlayerComplete(player);
+                    return;
+                }
+
+                // 多人模式：切换回合
+                if (gameMode === 'multi') {
+                    currentPlayerTurn = currentPlayerTurn === 1 ? 2 : 1;
+                    document.getElementById('panel1').classList.toggle('active-player', currentPlayerTurn === 1);
+                    document.getElementById('panel1').classList.toggle('opponent-turn', currentPlayerTurn !== 1);
+                    document.getElementById('panel2').classList.toggle('active-player', currentPlayerTurn === 2);
+                    document.getElementById('panel2').classList.toggle('opponent-turn', currentPlayerTurn !== 2);
+                    document.getElementById('numberPad2').style.display = currentPlayerTurn === 2 ? 'flex' : 'none';
+                    document.getElementById('numberPad1').style.display = currentPlayerTurn === 1 ? 'flex' : 'none';
+                    document.getElementById('message1').textContent = '';
+                    document.getElementById('message1').className = 'message';
+                }
+
+                // AI模式：触发AI回合
+                if (gameMode === 'ai' && !player.completed && player === p1) {
+                    scheduleAIMove();
+                }
+            }
+
+            function undoMove() {
+                // 撤回始终可用
+                if (history.length === 0) {
+                    document.getElementById('message1').textContent = '没有可撤回的操作';
+                    document.getElementById('message1').className = 'message info';
+                    return;
+                }
+                const last = history.pop();
+                last.player.board[last.row][last.col] = last.oldVal;
+                last.player.hintMask[last.row][last.col] = last.wasHint;
+                last.player.opponentMask[last.row][last.col] = last.wasOpponent;
+                last.player.selectedRow = last.row;
+                last.player.selectedCol = last.col;
+                last.player.filledCount = last.player.getFilledCount();
+                last.player.completed = false;
+                if (last.player === p1 && gameOver) {
+                    gameOver = false;
+                    startCountdown();
+                    if (gameMode === 'ai') startAI();
+                }
+                playClickSound();
+                refreshAllUI();
+            }
+
+            function eraseCell() {
+                // 擦除始终可用
+                if (p1.selectedRow < 0 || p1.selectedCol < 0) {
+                    document.getElementById('message1').textContent = '请先选中一个格子';
+                    document.getElementById('message1').className = 'message info';
+                    return;
+                }
+                if (p1.givenMask[p1.selectedRow][p1.selectedCol]) {
+                    document.getElementById('message1').textContent = '预设数字不可擦除';
+                    document.getElementById('message1').className = 'message info';
+                    return;
+                }
+                if (p1.board[p1.selectedRow][p1.selectedCol] === 0) return;
+                if (gameMode === 'multi' && currentPlayerTurn !== 1) return;
+
+                history.push({
+                    player: p1, row: p1.selectedRow, col: p1.selectedCol,
+                    oldVal: p1.board[p1.selectedRow][p1.selectedCol],
+                    wasHint: p1.hintMask[p1.selectedRow][p1.selectedCol],
+                    wasOpponent: p1.opponentMask[p1.selectedRow][p1.selectedCol],
+                });
+                p1.board[p1.selectedRow][p1.selectedCol] = 0;
+                p1.hintMask[p1.selectedRow][p1.selectedCol] = false;
+                p1.opponentMask[p1.selectedRow][p1.selectedCol] = false;
+                p1.filledCount = p1.getFilledCount();
+                p1.completed = false;
+                document.getElementById('message1').textContent = '';
+                document.getElementById('message1').className = 'message';
+                if (gameOver) {
+                    gameOver = false;
+                    startCountdown();
+                    if (gameMode === 'ai') startAI();
+                }
+                playClickSound();
+                refreshAllUI();
+            }
+
+            function giveHint() {
+                if (gameOver) return;
+                const candidates = [];
+                for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++)
+                    if (!p1.givenMask[r][c] && p1.board[r][c] !== p1.solution[r][c]) candidates.push([r, c]);
+                if (candidates.length === 0) return;
+                const [r, c] = candidates[Math.floor(Math.random() * candidates.length)];
+                history.push({
+                    player: p1, row: r, col: c, oldVal: p1.board[r][c],
+                    wasHint: p1.hintMask[r][c], wasOpponent: p1.opponentMask[r][c],
+                });
+                p1.board[r][c] = p1.solution[r][c];
+                p1.hintMask[r][c] = true;
+                p1.opponentMask[r][c] = false;
+                p1.selectedRow = r;
+                p1.selectedCol = c;
+                p1.filledCount = p1.getFilledCount();
+                playCorrectSound();
+                refreshAllUI();
+                if (p1.checkComplete()) { p1.completed = true; onPlayerComplete(p1); }
+            }
+
+            function checkSolution() {
+                let hasError = false, emptyCount = 0;
+                for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) {
+                    if (p1.board[r][c] === 0) emptyCount++;
+                    else if (p1.board[r][c] !== p1.solution[r][c]) hasError = true;
+                }
+                const msg = document.getElementById('message1');
+                if (emptyCount > 0 && !hasError) {
+                    msg.textContent = `📝 还有 ${emptyCount} 个空格，已填数字全部正确`;
+                    msg.className = 'message success';
+                } else if (hasError) {
+                    msg.textContent = '❌ 存在错误，红色格子需要修正';
+                    msg.className = 'message error-msg';
+                } else if (emptyCount === 0 && !hasError) {
+                    msg.textContent = '✅ 全部正确！恭喜完成！';
+                    msg.className = 'message success';
+                }
+                refreshAllUI();
+            }
+
+            function refreshAllUI() {
+                const isActive1 = gameMode !== 'multi' || currentPlayerTurn === 1;
+                const isActive2 = gameMode !== 'multi' || currentPlayerTurn === 2;
+                renderBoard(p1, 'board1', isActive1, false);
+                renderNumberPad(p1, 'numberPad1');
+                if (p2) {
+                    renderBoard(p2, 'board2', isActive2, true);
+                    renderNumberPad(p2, 'numberPad2');
+                }
+                updateScores();
+            }
+
+            function updateScores() {
+                document.getElementById('score1').textContent = `已填: ${p1.getFilledCount()} 格`;
+                if (p2 && (gameMode === 'ai' || gameMode === 'multi')) {
+                    document.getElementById('score2').textContent = `已填: ${p2.getFilledCount()} 格`;
+                }
+            }
+
+            // ==================== AI逻辑 ====================
+            let aiTimeout = null;
+            let aiActive = false;
+
+            function scheduleAIMove() {
+                if (!aiActive || gameOver || p2.completed) return;
+                const delay = 500 + Math.random() * 1200;
+                aiTimeout = setTimeout(() => {
+                    aiMakeMove();
+                    if (aiActive && !gameOver && !p2.completed) scheduleAIMove();
+                }, delay);
+            }
+
+            function aiMakeMove() {
+                if (gameOver || p2.completed) return;
+                const candidates = [];
+                for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++)
+                    if (!p2.givenMask[r][c] && p2.board[r][c] !== p2.solution[r][c]) candidates.push([r, c]);
+                if (candidates.length === 0) {
+                    if (p2.checkComplete()) { p2.completed = true; onPlayerComplete(p2); }
+                    return;
+                }
+                const [r, c] = candidates[Math.floor(Math.random() * candidates.length)];
+                let correctRate;
+                switch (difficulty) { case 'easy': correctRate = 0.55; break; case 'medium': correctRate = 0.72; break; case 'hard': correctRate = 0.86; break; default: correctRate = 0.72; }
+                if (Math.random() < correctRate) {
+                    p2.board[r][c] = p2.solution[r][c];
+                } else {
+                    const wrong = []; for (let n = 1; n <= 9; n++) if (n !== p2.solution[r][c]) wrong.push(n);
+                    p2.board[r][c] = wrong[Math.floor(Math.random() * wrong.length)];
+                }
+                p2.opponentMask[r][c] = true;
+                p2.selectedRow = r;
+                p2.selectedCol = c;
+                p2.filledCount = p2.getFilledCount();
+                refreshAllUI();
+                if (p2.checkComplete()) { p2.completed = true; onPlayerComplete(p2); }
+            }
+
+            function startAI() {
+                aiActive = true;
+                scheduleAIMove();
+            }
+
+            function stopAI() {
+                aiActive = false;
+                if (aiTimeout) { clearTimeout(aiTimeout); aiTimeout = null; }
+            }
+
+            // ==================== 完成处理 ====================
+            function onPlayerComplete(player) {
+                if (gameOver) return;
+                gameOver = true;
+                stopCountdown();
+                stopElapsedTimer();
+                stopAI();
+
+                // 计算用时
+                const finalTime = timeMode === 'unlimited' ? elapsedSeconds : (timeLimitSeconds - countdownRemaining);
+                const timeStr = formatTime(finalTime);
+
+                // 更新最快记录
+                let recordMsg = '';
+                if ((gameMode === 'solo' || gameMode === 'ai') && player === p1) {
+                    const prev = bestRecords[difficulty];
+                    if (prev === null || finalTime < prev) {
+                        bestRecords[difficulty] = finalTime;
+                        localStorage.setItem('sudoku_bestRecords', JSON.stringify(bestRecords));
+                        recordMsg = `🏅 新纪录！${difficulty === 'easy' ? '简易' : difficulty === 'medium' ? '普通' : '困难'}难度最快: ${timeStr}`;
+                    } else {
+                        recordMsg = `⏱ 用时: ${timeStr} ｜ 最快记录: ${formatTime(prev)}`;
+                    }
+                }
+
+                let icon, title, detail, levelMsg = '';
+                if (gameMode === 'solo') {
+                    totalLevelsCleared++;
+                    currentLevel++;
+                    localStorage.setItem('sudoku_totalLevels', totalLevelsCleared);
+                    localStorage.setItem('sudoku_currentLevel', currentLevel);
+                    icon = '🎉';
+                    title = '恭喜过关！';
+                    detail = `${difficulty === 'easy' ? '简易' : difficulty === 'medium' ? '普通' : '困难'}难度 · 用时 ${timeStr}`;
+                    levelMsg = `🏆 累计通关: ${totalLevelsCleared} 关 ｜ 当前第 ${currentLevel} 关`;
+                } else if (gameMode === 'ai') {
+                    if (player === p1) {
+                        totalLevelsCleared++;
+                        currentLevel++;
+                        localStorage.setItem('sudoku_totalLevels', totalLevelsCleared);
+                        localStorage.setItem('sudoku_currentLevel', currentLevel);
+                        icon = '🏆'; title = '你赢了！';
+                        detail = `你比AI更快完成！用时 ${timeStr}`;
+                        levelMsg = `🏆 累计通关: ${totalLevelsCleared} 关`;
+                    } else {
+                        icon = '😢'; title = 'AI赢了';
+                        detail = 'AI在你之前完成了数独，再接再厉！';
+                    }
+                } else if (gameMode === 'multi') {
+                    icon = '🏆';
+                    title = `玩家${player === p1 ? '1 (紫色)' : '2 (蓝色)'} 获胜！`;
+                    detail = '率先完成了数独！';
+                }
+
+                document.getElementById('resultIcon').textContent = icon;
+                document.getElementById('resultTitle').textContent = title;
+                document.getElementById('resultDetail').textContent = detail;
+                document.getElementById('resultLevel').textContent = levelMsg;
+                document.getElementById('resultRecord').textContent = recordMsg;
+                document.getElementById('resultOverlay').classList.remove('hidden');
+                updateLevelDisplay();
+
+                if ((player === p1 && gameMode !== 'ai') || (gameMode === 'ai' && player === p1)) {
+                    playWinSound();
+                }
+            }
+
+            function showTimeoutResult() {
+                gameOver = true;
+                stopCountdown();
+                stopElapsedTimer();
+                stopAI();
+                document.getElementById('resultIcon').textContent = '⏰';
+                document.getElementById('resultTitle').textContent = '时间到！';
+                document.getElementById('resultDetail').textContent = '很遗憾，本局时间耗尽，挑战失败。';
+                document.getElementById('resultLevel').textContent = `📊 累计通关: ${totalLevelsCleared} 关`;
+                document.getElementById('resultRecord').textContent = '';
+                document.getElementById('resultOverlay').classList.remove('hidden');
+            }
+
+            function formatTime(seconds) {
+                const m = Math.floor(seconds / 60);
+                const s = seconds % 60;
+                return `${m}:${s.toString().padStart(2, '0')}`;
+            }
+
+            // ==================== 计时系统 ====================
+            function startCountdown() {
+                stopCountdown();
+                stopElapsedTimer();
+                if (timeMode === 'unlimited') {
+                    document.getElementById('countdownDisplay').textContent = '⏱ 0:00';
+                    elapsedSeconds = 0;
+                    elapsedInterval = setInterval(() => {
+                        elapsedSeconds++;
+                        document.getElementById('countdownDisplay').textContent = `⏱ ${formatTime(elapsedSeconds)}`;
+                    }, 1000);
+                    return;
+                }
+                countdownRemaining = timeLimitSeconds;
+                updateCountdownDisplay();
+                countdownInterval = setInterval(() => {
+                    countdownRemaining--;
+                    updateCountdownDisplay();
+                    if (countdownRemaining <= 0) {
+                        showTimeoutResult();
+                    }
+                }, 1000);
+            }
+
+            function stopCountdown() {
+                if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+            }
+
+            function stopElapsedTimer() {
+                if (elapsedInterval) { clearInterval(elapsedInterval); elapsedInterval = null; }
+            }
+
+            function updateCountdownDisplay() {
+                const el = document.getElementById('countdownDisplay');
+                const m = Math.floor(countdownRemaining / 60);
+                const s = countdownRemaining % 60;
+                el.textContent = `⏱ ${m}:${s.toString().padStart(2, '0')}`;
+                el.classList.toggle('urgent', countdownRemaining <= 30);
+            }
+
+            window.setTimeMode = function (mode) {
+                timeMode = mode;
+                document.querySelectorAll('#timeOptionRow .option-btn').forEach(b => b.classList.remove('active'));
+                const targetBtn = document.querySelector(`#timeOptionRow [data-time="${mode}"]`);
+                if (targetBtn) targetBtn.classList.add('active');
+                const customRow = document.getElementById('customTimeRow');
+                if (mode === 'custom') {
+                    customRow.style.display = 'flex';
+                    timeLimitSeconds = customTimeMinutes * 60;
+                } else {
+                    customRow.style.display = 'none';
+                    switch (mode) {
+                        case '20min': timeLimitSeconds = 1200; break;
+                        case '30min': timeLimitSeconds = 1800; break;
+                        default: timeLimitSeconds = 0; break;
+                    }
+                }
+                resetGame();
+            };
+
+            window.updateCustomTime = function () {
+                const val = parseInt(document.getElementById('customMinutes').value) || 15;
+                customTimeMinutes = Math.max(1, Math.min(120, val));
+                document.getElementById('customMinutes').value = customTimeMinutes;
+                if (timeMode === 'custom') {
+                    timeLimitSeconds = customTimeMinutes * 60;
+                    resetGame();
+                }
+            };
+
+            window.setDifficulty = function (diff) {
+                difficulty = diff;
+                document.querySelectorAll('.diff-btn-game').forEach(b => b.classList.remove('active'));
+                document.querySelector(`[data-diff="${diff}"]`).classList.add('active');
+                resetGame();
+            };
+
+            // ==================== 游戏控制 ====================
+            function initPlayers() {
+                p1 = new PlayerState();
+                p2 = null;
+                if (gameMode === 'ai' || gameMode === 'multi') p2 = new PlayerState();
+            }
+
+            window.resetGame = function () {
+                document.getElementById('resultOverlay').classList.add('hidden');
+                stopCountdown();
+                stopElapsedTimer();
+                stopAI();
+                gameOver = false;
+                history = [];
+                currentPlayerTurn = 1;
+
+                initPlayers();
+                const full = generateFullBoard();
+                p1.load(full, difficulty);
+                if (p2) p2.load(full, difficulty);
+
+                document.getElementById('message1').textContent = '';
+                document.getElementById('message1').className = 'message';
+                if (p2) { document.getElementById('message2').textContent = ''; document.getElementById('message2').className = 'message'; }
+
+                document.getElementById('panel1').classList.add('active-player');
+                document.getElementById('panel1').classList.remove('opponent-turn');
+                document.getElementById('panel2').classList.remove('active-player');
+                document.getElementById('panel2').classList.remove('opponent-turn');
+                document.getElementById('numberPad1').style.display = 'flex';
+                document.getElementById('numberPad2').style.display = 'none';
+
+                updateLevelDisplay();
+                updateBestRecordDisplay();
+                refreshAllUI();
+                startCountdown();
+
+                if (gameMode === 'ai') startAI();
+            };
+
+            window.nextLevel = function () {
+                resetGame();
+            };
+
+            function updateLevelDisplay() {
+                const el = document.getElementById('levelDisplay');
+                if (gameMode === 'solo' || gameMode === 'ai') {
+                    el.textContent = `🏆 第 ${currentLevel} 关`;
+                } else {
+                    el.textContent = '';
+                }
+            }
+
+            function updateBestRecordDisplay() {
+                const el = document.getElementById('bestRecordDisplay');
+                const rec = bestRecords[difficulty];
+                if (rec !== null && (gameMode === 'solo' || gameMode === 'ai')) {
+                    el.textContent = `🏅 最快: ${formatTime(rec)}`;
+                } else {
+                    el.textContent = '';
+                }
+            }
+
+            // ==================== 模式切换 ====================
+            window.startSoloMode = function () {
+                gameMode = 'solo';
+                document.getElementById('menuOverlay').classList.add('hidden');
+                document.getElementById('gameWrapper').classList.add('visible');
+                document.getElementById('gameModeLabel').textContent = '🎯 单人闯关';
+                document.getElementById('soloControls').style.display = 'block';
+                document.getElementById('panel2').style.display = 'none';
+                document.getElementById('timeOptionRow').style.display = 'flex';
+                document.getElementById('p2Name').innerHTML = '';
+                resetGame();
+            };
+
+            window.startAIMode = function () {
+                gameMode = 'ai';
+                document.getElementById('menuOverlay').classList.add('hidden');
+                document.getElementById('gameWrapper').classList.add('visible');
+                document.getElementById('gameModeLabel').textContent = '🤖 AI对战';
+                document.getElementById('soloControls').style.display = 'block';
+                document.getElementById('panel2').style.display = 'block';
+                document.getElementById('p2Name').innerHTML = '<span class="player-color-dot" style="background:var(--red);"></span>🤖 AI对手';
+                document.getElementById('timeOptionRow').style.display = 'flex';
+                document.getElementById('numberPad2').style.display = 'none';
+                resetGame();
+            };
+
+            window.startMultiMode = function () {
+                gameMode = 'multi';
+                document.getElementById('menuOverlay').classList.add('hidden');
+                document.getElementById('gameWrapper').classList.add('visible');
+                document.getElementById('gameModeLabel').textContent = '👥 本地多人';
+                document.getElementById('soloControls').style.display = 'block';
+                document.getElementById('panel2').style.display = 'block';
+                document.getElementById('p2Name').innerHTML = '<span class="player-color-dot" style="background:#0984e3;"></span>👤 玩家2';
+                document.getElementById('timeOptionRow').style.display = 'flex';
+                document.getElementById('numberPad2').style.display = 'none';
+                resetGame();
+            };
+
+            window.backToMenu = function () {
+                stopCountdown();
+                stopElapsedTimer();
+                stopAI();
+                gameOver = true;
+                document.getElementById('resultOverlay').classList.add('hidden');
+                document.getElementById('gameWrapper').classList.remove('visible');
+                document.getElementById('menuOverlay').classList.remove('hidden');
+            };
+
+            // ==================== 键盘操作 ====================
+            document.addEventListener('keydown', (e) => {
+                if (gameOver) return;
+                if (!document.getElementById('menuOverlay').classList.contains('hidden')) return;
+                if (gameMode === 'multi' && currentPlayerTurn !== 1) return;
+                const key = e.key;
+                if (key >= '1' && key <= '9') {
+                    e.preventDefault();
+                    placeNumber(p1, parseInt(key));
+                } else if (key === 'Backspace' || key === 'Delete' || key === '0') {
+                    e.preventDefault();
+                    eraseCell();
+                } else if (key === 'ArrowUp' && p1.selectedRow > 0) {
+                    e.preventDefault(); p1.selectedRow--; playClickSound(); refreshAllUI();
+                } else if (key === 'ArrowDown' && p1.selectedRow < SIZE - 1) {
+                    e.preventDefault(); p1.selectedRow++; playClickSound(); refreshAllUI();
+                } else if (key === 'ArrowLeft' && p1.selectedCol > 0) {
+                    e.preventDefault(); p1.selectedCol--; playClickSound(); refreshAllUI();
+                } else if (key === 'ArrowRight' && p1.selectedCol < SIZE - 1) {
+                    e.preventDefault(); p1.selectedCol++; playClickSound(); refreshAllUI();
+                }
+            });
+
+            // ==================== 初始化 ====================
+            function loadProgress() {
+                totalLevelsCleared = parseInt(localStorage.getItem('sudoku_totalLevels')) || 0;
+                currentLevel = parseInt(localStorage.getItem('sudoku_currentLevel')) || 1;
+                const saved = localStorage.getItem('sudoku_bestRecords');
+                if (saved) {
+                    try { bestRecords = JSON.parse(saved); } catch (e) { bestRecords = { easy: null, medium: null, hard: null }; }
+                }
+            }
+
+            loadProgress();
+            initPlayers();
+            const full = generateFullBoard();
+            p1.load(full, difficulty);
+            document.getElementById('score1').textContent = '已填: 0 格';
+            updateLevelDisplay();
+            updateBestRecordDisplay();
+        })();
+    </script>
+</body>
+</html>
